@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration 
+PUBLIC " - //mybatis.org//DTD Config 3.0//EN"
+	   " http://mybatis.org/dtd/mybatis-3-config.dtd">
+	   
+	   <configuration>
+	   		<!-- mybatis 기본 세팅 -->
+			<settings>
+				<setting name="cacheEnabled"              value="true"/>  
+		        <setting name="lazyLoadingEnabled"        value="false"/>  
+		        <setting name="multipleResultSetsEnabled" value="true"/>  
+		        <setting name="useColumnLabel"            value="true"/>  
+		        <setting name="useGeneratedKeys"          value="false"/>  
+		        <setting name="defaultExecutorType"       value="SIMPLE"/>  
+		        <setting name="defaultStatementTimeout"   value="25000"/>  
+			</settings>
+	
+	<!-- typeAliases를 넣어야 할 경우 -->
+	   <typeAliases>
+	   		<typeAlias alias="LendplaceModel" type="yogi.lendplace.LendplaceModel"/>
+	   		<typeAlias alias="MembersModel" type="yogi.members.MembersModel"/>
+	   		<typeAlias alias="groupModel" type="yogi.group.GroupModel" />
+	   </typeAliases>
+	<!-- SQL 정의한 xml문서 Mapping -->
+	<mappers>
+		<mapper resource="mybatis/members-sql.xml" />
+		<mapper resource="mybatis/group-sql.xml" />
+		<mapper resource="mybatis/lendplace-sql.xml"/>
+		<mapper resource="mybatis/admin-sql.xml"/>
+		<mapper resource="mybatis/mypage-sql.xml"/>
+		<mapper resource="mybatis/alram-sql.xml"/>
+		<mapper resource="mybatis/report-sql.xml"/>
+	</mappers>
+	
+	</configuration>

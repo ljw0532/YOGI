@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+
+<tiles-definitions>
+	<definition name="firstPage" template="/WEB-INF/views/firstPage/firstPage.jsp" />
+	<definition name="createForm" template="/WEB-INF/views/members/createForm.jsp" />
+	<definition name="mainPage" template="/WEB-INF/views/main/main.jsp" />
+	<definition name="findPage" template="/WEB-INF/views/members/findPage.jsp" />
+	<definition name="findId" template="/WEB-INF/views/members/findId.jsp" />
+	<definition name="findPW" template="/WEB-INF/views/members/findPW.jsp" />
+	<definition name="result" template="/WEB-INF/views/members/result.jsp" />
+	<definition name="mError" template="/WEB-INF/views/members/error.jsp" />
+</tiles-definitions>

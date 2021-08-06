@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC " - //mybatis.org//DTD Config 3.0//EN" " http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mypage">
+
+<!-- 회원정보 검색 -->
+	<select id="selectOneMember" parameterType="Integer" resultType="hashmap">
+		SELECT M_GRADE,
+      			 M_LV,
+     			 M_PENALTY,
+     			 M_PROFILE,
+     			 (select COUNT(*) from (SELECT * FROM GROUP_GATHERING where m_no=#{m_no})) as WRITE_COUNT,
+		(select COUNT(*) from (SELECT * FROM GROUP_GATHERING WHERE gg_no in(select gg_no from group_enroll where m_no=#{m_no}))) as MEET_COUNT,
+		(select COUNT(*) from (select * from Group_Gathering where gg_no in(select gg_no from LikeIt where m_no=#{m_no}))) as ZZIM_COUNT,
+		(select COUNT(*) from (SELECT L.L_NO , 
+		   L.L_SUBJECT , 
+		   PB.M_NO ,
+		   TO_CHAR(PB.U_DATE,'YYYY-MM-DD') AS U_DATE ,
+		   TO_CHAR(PB.PB_DATE,'YYYY-MM-DD') AS PB_DATE 
+	FROM LENDPLACE L , PLACEBOOK PB 
+	WHERE L.L_NO = PB.L_NO AND PB.M_NO=#{m_no} )) as PLACEBOOK_COUNT,
+		(select COUNT(*) from (SELECT R.R_NO , R.R_COMMENT , G.GG_NAME FROM REPORT R, GROUP_GATHERING G WHERE R.GG_NO = G.GG_NO AND R.M_PNO=#{m_no})) as REPORT_COUNT
+		FROM MEMBERS WHERE M_NO=#{m_no}
+	</select>
+	
+	<!-- 마이페이지 내가 개설한 모임 -->
+	<select id="writeHistory" resultType="hashmap">
+		SELECT * FROM GROUP_GATHERING where m_no=#{m_no} order by gg_no desc
+	</select>
+	
+	<!--  마이페이지 모임참여내역 -->
+	<select id="meetHistory" resultType="hashmap">
+		SELECT GG_NO,
+			   GG_NAME,
+			   TO_CHAR(GG_DATE,'YYYY-MM-DD') AS GG_DATE
+	    FROM GROUP_GATHERING 
+	    WHERE gg_no in(select gg_no from group_enroll where m_no=#{m_no})
+	</select>
+	
+	<!-- 마이페이지 찜 목록 -->
+	<select id="zzimHistory" resultType="hashmap">
+	select * from Group_Gathering where gg_no in(select gg_no from LikeIt where m_no=#{m_no})	
+	</select>
+	
+	<!-- 마이페이지 장소 신청 내역 -->
+	<select id="placebookHistory" resultType="hashmap">
+ 	SELECT L.L_NO , 
+		   L.L_SUBJECT , 
+		   PB.M_NO ,
+		   TO_CHAR(PB.U_DATE,'YYYY-MM-DD') AS U_DATE ,
+		   TO_CHAR(PB.PB_DATE,'YYYY-MM-DD') AS PB_DATE 
+	FROM LENDPLACE L , PLACEBOOK PB 
+	WHERE L.L_NO = PB.L_NO AND PB.M_NO=#{m_no} ORDER BY L.L_NO DESC
+	</select>
+
+	<!-- 마이페이지 신고목록-->
+	<select id="reportHistory" resultType="hashmap">
+		SELECT R.R_NO , R.R_COMMENT , G.GG_NAME , G.GG_NO FROM REPORT R, GROUP_GATHERING G WHERE R.GG_NO = G.GG_NO AND R.M_PNO=#{m_no}
+	</select>
+	
+	<!-- 모임 신고 -->
+	<!-- <insert id="report_insert" resultType="hashmap">
+   		insert into report values (report_seq.nextval,#m_no#,#gg_no#) 
+   </insert>
+   
+   	<update id="gg_update_penalty" parameterClass="int">
+		update group_gathering set gg_penalty = gg_penalty + 1 where gg_no = #gg_no#
+	</update>
+	
+	<update id="mb_update_penalty" parameterClass="int">
+		update members set m_penalty = m_penalty + 1 where m_no = #m_no#
+	</update> -->
+	
+	<!--신고취소-->
+	<!-- <delete id="report_cancel" parameterClass="int">
+		delete from report
+		<include refid="rp_where_gg_no" />
+	</delete>  -->
+
+</mapper>

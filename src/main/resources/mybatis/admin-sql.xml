@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC " - //mybatis.org//DTD Config 3.0//EN" " http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+     
+<mapper namespace="admin">
+	<select id="selectOneAdminMember" parameterType="Integer" resultType="hashmap">
+		SELECT
+			*
+		FROM
+			members
+		WHERE
+			m_no=#{M_NO}
+	</select>
+
+<!-- 멤버 관리 -->
+	<!-- 멤버 목록 가져오기 -->
+	<select id="selectAdminMemberList" resultType="hashmap">	
+		SELECT 
+			m_no,
+			m_id,
+			m_name,
+			m_email,
+			m_fav_area,
+			m_fav_field,
+			m_grade,
+			m_lv,
+			m_penalty,
+			to_char(m_date,'yyyy/MM/dd') as m_date,
+			m_active
+		FROM 
+			Members 
+		<where>
+			<if test="searchWord != null">
+				<if test="searchCategory.equals('id')">
+					REGEXP_LIKE(m_id,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('grade')">
+					AND REGEXP_LIKE(m_lv,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('name')">
+					AND REGEXP_LIKE(m_name,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('favArea')">
+					AND REGEXP_LIKE(m_fav_area,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('favField')">
+					AND REGEXP_LIKE(m_fav_field,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('penalty')">
+					AND m_penalty <![CDATA[ >= ]]> #{searchWord}
+				</if>
+			</if>
+			<if test="searchMemberActive != null">
+				<if test='searchMemberActive.equals("O")'>
+					<![CDATA[ AND m_active = 0  ]]>
+				</if>
+				<if test='searchMemberActive.equals("X")'>
+					<![CDATA[ AND m_active = 1   ]]>
+				</if>
+			</if>
+		</where>
+		ORDER BY 
+			m_no DESC 
+	</select>
+	
+	<select id="selectAdminMemberOne" resultType="hashmap">
+		SELECT 
+			m_no,
+			m_id,
+			m_phone,
+			m_grade,
+			m_lv,
+			m_penalty,
+			to_char(m_date,'yyyy/MM/dd') as m_date,
+			m_active
+		FROM 
+			Members 
+		WHERE
+			m_no=#{m_no}
+		ORDER BY 
+			m_no DESC 
+	</select>
+	
+	<update id="inactivateMember" parameterType="hashmap">
+		UPDATE 
+			Members 
+		SET
+			m_active=1
+		WHERE
+			m_no=#{M_NO}
+	</update>
+	
+	<update id="activateMember" parameterType="hashmap">
+		UPDATE 
+			Members 
+		SET
+			m_active=0
+		WHERE
+			m_no=#{M_NO}
+	</update>
+
+<!-- 멤버 관리 끝 -->
+
+<!-- 모임 관리 -->
+	<!-- 모임 목록 가져오기 -->
+	<select id="selectAdminGroupList" resultType="hashmap">
+		SELECT
+			gg_no,
+			gg_name,
+			m_id,
+			gg_category,
+			gg_place,
+			gg_cost,
+			gg_total,
+			gg_enable,
+			gg_penalty,
+			gg_active,
+			to_char(gg_date,'yyyy/MM/dd') as gg_date
+		FROM
+			group_gathering g, members m
+		<where>
+			g.m_no=m.m_no
+			<if test="searchWord != null">
+				<if test="searchCategory.equals('id')">
+					AND REGEXP_LIKE(m_id,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('category')">
+					AND REGEXP_LIKE(gg_category,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('groupName')">
+					AND REGEXP_LIKE(gg_name,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('place')">
+					AND REGEXP_LIKE(gg_place,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('total')">
+					AND REGEXP_LIKE(gg_total,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('penalty')">
+					AND g.gg_penalty <![CDATA[ >= ]]> #{searchWord}
+				</if>
+			</if>
+			<if test="searchGroupActive != null">
+				<if test='searchGroupActive.equals("O")'>
+					<![CDATA[ AND gg_active = 0  ]]>
+				</if>
+				<if test='searchGroupActive.equals("X")'>
+					<![CDATA[ AND gg_active = 1   ]]>
+				</if>
+			</if>
+		</where>
+		ORDER BY
+			gg_no DESC
+	</select>
+
+	<update id="inactivateGroup" parameterType="hashmap">
+		UPDATE 
+			Group_Gathering
+		SET
+			gg_active=1
+		WHERE
+			gg_no=#{GG_NO}
+	</update>
+	
+	<update id="activateGroup" parameterType="hashmap">
+		UPDATE 
+			Group_Gathering
+		SET
+			gg_active=0
+		WHERE
+			gg_no=#{GG_NO}
+	</update>
+<!-- 모임 관리 끝-->
+
+<!-- 신고 관리 -->
+	<!-- 신고 목록 가져오기 -->
+	<select id="selectAdminReportList" resultType="hashmap">
+				SELECT 
+					r_no,
+                    gg_name,
+                    gg_category,
+					m_id,
+					r.m_no,
+					r_comment,
+					m_active,
+					m_penalty,
+					gg_active,
+					gg_penalty
+				FROM
+					Report r, Members m, Group_Gathering g
+				<where>
+					r.m_pno=m.m_no AND r.gg_no=g.gg_no
+					<if test="searchWord != null">
+						<if test="searchCategory.equals('id')">
+							AND REGEXP_LIKE(m_id,#{searchWord}) 
+						</if>
+						<if test="searchCategory.equals('category')">
+							AND REGEXP_LIKE(gg_category,#{searchWord}) 
+						</if>
+						<if test="searchCategory.equals('groupName')">
+							AND REGEXP_LIKE(gg_name,#{searchWord}) 
+						</if>
+						<if test="searchCategory.equals('penaltyMember')">
+							AND m.m_penalty <![CDATA[ >= ]]> #{searchWord}
+						</if>
+						<if test="searchCategory.equals('penaltyGroup')">
+							AND g.gg_penalty <![CDATA[ >= ]]> #{searchWord}
+						</if>
+					</if>
+					<if test="searchGroupActive != null">
+						<if test='searchGroupActive.equals("O")'>
+							<![CDATA[ AND gg_active = 0  ]]>
+						</if>
+						<if test='searchGroupActive.equals("X")'>
+							<![CDATA[ AND gg_active = 1   ]]>
+						</if>
+					</if>
+					<if test="searchMemberActive != null">
+						<if test='searchMemberActive.equals("O")'>
+							<![CDATA[ AND m_active = 0  ]]>
+						</if>
+						<if test='searchMemberActive.equals("X")'>
+							<![CDATA[ AND m_active = 1   ]]>
+						</if>
+					</if>
+				</where>
+				ORDER BY
+					r_no DESC
+	</select>
+
+	<!-- 회원 비활성화 -->
+	<update parameterType="hashmap" id="member_inactive"> 
+		{call declare begin UPDATE Members SET m_active=#{m_active} WHERE m_no=#{m_no} UPDATE Group_Gathering SET gg_active=#{gg_active} WHERE gg_no=#{gg_no} end } 
+	</update>
+
+	<!-- 모임 비활성화 -->
+	<update parameterType="hashmap" id="group_inactive"> 
+		UPDATE Group_Gathering SET gg_active=#{gg_active} WHERE gg_no=#{gg_no} 
+	</update>
+
+<!-- 신고 관리 끝-->
+
+
+<!-- 장소 관리 -->
+	<!-- 장소 목록 가져오기 -->
+	<select id="selectAdminLendplaceList" resultType="hashmap"> 
+		SELECT 
+			l_no, 
+			l_subject, 
+			l_addr,
+			l_enable,
+			l_payment,
+			TO_CHAR(L_SDATE,'YYYY-MM-DD') AS l_sdate, 
+			TO_CHAR(L_EDATE,'YYYY-MM-DD') AS l_edate, 
+			l_rate,
+			l_udate
+		FROM 
+			lendplace 
+		<where>
+			<if test="searchWord != null">
+				<if test="searchCategory.equals('addr')">
+					AND REGEXP_LIKE(l_addr,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('place')">
+					AND REGEXP_LIKE(l_subject,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('enable')">
+					AND l_enable <![CDATA[ >= ]]> #{searchWord}
+				</if>
+				<if test="searchCategory.equals('payment')">
+					AND l_payment <![CDATA[ >= ]]> #{searchWord}
+				</if>
+				<if test="searchCategory.equals('rate')">
+					AND l_rate <![CDATA[ >= ]]> #{searchWord}
+				</if>
+			</if>
+		</where>
+		ORDER BY 
+			l_no desc 
+	</select>
+	
+<!-- 장소 관리 끝 -->
+
+<!-- 장소 예약 현황 -->
+	<!-- 장소 예약 현황 -->
+	<select id="selectAdminPlaceBookList" resultType="hashmap">
+		SELECT
+			pb_no,
+			l_addr,
+			l_subject,
+			m_id,
+			TO_CHAR(PB_DATE,'YYYY-MM-DD') AS PB_DATE,
+			TO_CHAR(U_DATE,'YYYY-MM-DD') AS u_date
+		FROM
+			placebook p, lendplace l, members m
+		<where>
+			p.m_no=m.m_no AND p.l_no=l.l_no
+			<if test="searchWord != null">
+				<if test="searchCategory.equals('id')">
+					AND REGEXP_LIKE(m_id,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('addr')">
+					AND REGEXP_LIKE(l_addr,#{searchWord}) 
+				</if>
+				<if test="searchCategory.equals('place')">
+					AND REGEXP_LIKE(l_subject,#{searchWord}) 
+				</if>
+			</if>
+		</where>
+		ORDER BY
+			pb_no desc
+	</select>
+
+
+<!-- 장소 예약 현황 끝-->
+
+</mapper>

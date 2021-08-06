@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing 
+		infrastructure -->
+		
+	<!-- 인터셉터설정 (로그설정) -->
+	<mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <beans:bean id="loggerInterceptor" class="yogi.common.logger.LoggerInterceptor"></beans:bean>
+        </mvc:interceptor>
+    </mvc:interceptors>    
+ 
+	<!-- annotation-driven + 커맨드맵을 쓰기위한 설정 -->
+	<mvc:annotation-driven>
+		<mvc:argument-resolvers>
+			<beans:bean class="yogi.config.CustomMapArgumentResolver"></beans:bean>
+		</mvc:argument-resolvers>
+		
+		<!-- messageConvertert -->
+		<mvc:message-converters>
+			<beans:bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<beans:property name="supportedMediaTypes">
+					<beans:list>
+						<beans:value>text/html; charset=UTF-8</beans:value>
+				</beans:list>
+				</beans:property>
+			</beans:bean>
+			<!-- Ajax 설정 -->
+			<beans:bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<beans:property name="supportedMediaTypes">
+					<beans:list>
+						<beans:value>application/json; charset=UTF-8</beans:value>
+					</beans:list>
+				</beans:property>
+			</beans:bean>
+
+         </mvc:message-converters>
+	</mvc:annotation-driven>
+	
+	<!-- 빈자동설정 범위 -->
+	<context:component-scan base-package="yogi" />
+	<!-- Enables the Spring MVC @Controller programming model -->
+	
+	<!-- 정적자원처리를 위한 리소스경로 -->
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	
+	<!-- 뷰리졸버 order 2 (JSP 포워딩) -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+		<beans:property name="order" value="2"></beans:property>
+	</beans:bean>
+	
+	<!-- 뷰리졸버 order 1 (타일즈 이름) -->
+	<beans:bean id="viewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<beans:property name="viewClass" value="org.springframework.web.servlet.view.tiles2.TilesView" />
+		<beans:property name="order" value="1"></beans:property>
+	</beans:bean>
+	
+	<!-- 뷰리졸버 order 0 (다운로드용) --> <!-- Ajax설정에도 필요함! -->
+   <beans:bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+      <beans:property name="order" value="0"></beans:property> 
+   </beans:bean>
+   
+   <beans:bean id="naverLoginBO" class="yogi.members.NaverLoginBO" />
+   <!-- NaverLoginBO Class에 대한 Bean설정 추가 -->
+   
+    <!-- 다운로드뷰  -->
+   <!-- <beans:bean id="download" class="download 클래스 넣으면 돼!" />  -->
+   
+   <!-- 파일 업로드 resolver -->
+   <beans:bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+      <beans:property name="defaultEncoding" value="UTF-8" />
+      <beans:property name="maxUploadSize" value="10485760" />
+   </beans:bean>
+
+	<!-- 타일즈 설정 -->
+   <beans:bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles2.TilesConfigurer">
+		<beans:property name="definitions" value="/tiles/*-tiles.xml"/>
+		<beans:property name="preparerFactoryClass" value="org.springframework.web.servlet.view.tiles2.SpringBeanPreparerFactory"/>
+	</beans:bean>
+	
+	
+</beans:beans>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC " - //mybatis.org//DTD Config 3.0//EN" " http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="report">
+<!-- 타회원 정보 보기 -->
+<select id="viewUserInfo" resultType="hashmap">
+	SELECT 
+		* 
+	FROM 
+		MEMBERS 
+	WHERE 
+		m_no=#{m_pno}
+</select>
+
+<select id="groupIntersection" resultType="hashmap">
+		SELECT
+		a.gg_no,
+		a.gg_name
+	FROM
+		(	SELECT
+				gg_no,
+				gg_name
+			FROM
+				group_gathering
+			WHERE
+				m_no=#{m_pno}) a, 
+		(	SELECT
+				gg_no
+			FROM
+				group_enroll
+			WHERE
+				m_no=#{m_no}) b
+	WHERE
+		a.gg_no = b.gg_no
+</select>
+
+<insert id="insertReport" parameterType="hashmap">
+	INSERT INTO report(
+		r_no,
+		m_no,
+		m_pno,
+		gg_no,
+		r_comment)
+	VALUES (
+		report_seq.nextval,
+		#{m_no},
+		#{m_pno},
+		#{gg_no},
+		#{r_comment})
+</insert>
+
+<update id="updatePenaltyByMNO" parameterType="hashmap">
+	UPDATE 
+		members
+	SET
+		m_penalty=m_penalty+5
+	WHERE
+		m_no=#{m_pno}
+</update>
+
+<update id="updatePenaltyByGGNO" parameterType="hashmap">
+	UPDATE 
+		group_gathering
+	SET
+		gg_penalty=gg_penalty+3
+	WHERE
+		gg_no=#{gg_no}
+</update>
+
+<select id="reportCheck" parameterType="hashmap" resultType="int">
+	SELECT
+		r_no
+	FROM
+		report
+	WHERE 
+		m_no=#{userNo} AND gg_no=#{groupNo} 
+</select>
+</mapper>

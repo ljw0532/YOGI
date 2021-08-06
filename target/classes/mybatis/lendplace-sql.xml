@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="lendplace">
+
+<resultMap type="LendplaceModel" id="lendplaceRes">
+      <result property="l_no" column="L_NO" />
+      <result property="l_subject" column="L_SUBJECT" />
+      <result property="l_addr" column="L_ADDR" />
+      <result property="l_content" column="L_CONTENT" />
+      <result property="l_rep_img" column="L_REP_IMG" />
+      <result property="l_enable" column="L_ENABLE" />
+      <result property="l_payment" column="L_PAYMENT" />
+      <result property="l_sdate" column="L_SDATE" />
+      <result property="l_edate" column="L_EDATE" />
+      <result property="l_rate" column="L_RATE" />
+   </resultMap>
+
+
+<!-- 장소목록 조회 -->
+<select id="selectLendplaceList" resultType="hashmap" parameterType="hashmap">
+		SELECT 
+			L_NO, 
+			L_SUBJECT, 
+			L_ADDR, 
+			L_CONTENT, 
+			L_REP_IMG, 
+			L_ENABLE, 
+			L_PAYMENT,
+			TO_CHAR(L_SDATE,'YYYY-MM-DD') AS L_SDATE, 
+			TO_CHAR(L_EDATE,'YYYY-MM-DD') AS L_EDATE, 
+			L_RATE
+		FROM LENDPLACE
+		<where>
+			<if test="searchWord != null">
+				<![CDATA[
+				(L_SUBJECT like '%' || #{searchWord} || '%' or L_CONTENT like '%' || #{searchWord} || '%')
+				]]>
+			</if>
+			<if test="searchAddr != null">
+				<![CDATA[
+				AND REGEXP_LIKE(L_ADDR,#{searchAddr})
+				]]>
+			</if>
+			<if test="min_pay != null and max_pay != null">
+				<![CDATA[
+				AND ((L_PAYMENT >= #{min_pay} and #{max_pay} >= L_PAYMENT))
+				]]>
+			</if>
+			<if test="l_sdate != null and l_edate != null">
+				<![CDATA[
+				AND ((L_SDATE >= TO_DATE(#{l_sdate},'YYYY-MM-DD') and TO_DATE(#{l_edate},'YYYY-MM-DD') >= L_EDATE))
+				]]>
+			</if>
+		</where>
+		ORDER BY L_NO DESC
+</select> 
+
+<!-- 장소상세페이지 조회 -->
+<select id="selectLendplaceDetail" resultType="hashmap" parameterType="hashmap">
+	<![CDATA[
+		SELECT 
+			L_NO, 
+			L_SUBJECT, 
+			L_ADDR, 
+			L_CONTENT, 
+			L_REP_IMG, 
+			L_ENABLE, 
+			L_PAYMENT,
+			TO_CHAR(L_SDATE,'YYYY-MM-DD') AS L_SDATE, 
+			TO_CHAR(L_EDATE,'YYYY-MM-DD') AS L_EDATE, 
+			L_RATE,
+			L_UDATE
+		FROM LENDPLACE 
+		WHERE L_NO = #{L_NO}
+	]]>
+</select>
+
+<!-- 날짜 중복확인 -->
+<select id="dateCheck" resultType="hashmap" parameterType="hashmap">
+	<![CDATA[
+		SELECT 
+			TO_CHAR(U_DATE,'YYYY-MM-DD') AS U_DATE
+		FROM PLACEBOOK
+		WHERE L_NO = #{L_NO}
+	]]>
+</select>
+	
+<!-- 장소 등록 -->
+<insert id="insertLendplace" parameterType="LendplaceModel">
+   		INSERT INTO LENDPLACE (
+   			L_NO,
+			L_SUBJECT,
+			L_ADDR,
+			L_CONTENT,
+			L_REP_IMG,
+			L_ENABLE,
+			L_PAYMENT,
+			L_SDATE,
+			L_EDATE
+			)
+		VALUES (
+			LENDPLACE_SEQ.NEXTVAL,
+			#{L_SUBJECT},
+			#{L_ADDR},
+			#{L_CONTENT},
+			#{L_REP_IMG},
+			#{L_ENABLE},
+			#{L_PAYMENT},
+			TO_DATE(#{L_SDATE},'YYYY-MM-DD'),
+			TO_DATE(#{L_EDATE},'YYYY-MM-DD')
+			)
+</insert>
+
+<!-- 장소 내용 수정 -->
+<update id="updateLendplace" parameterType="hashmap" >
+	<![CDATA[
+		UPDATE LENDPLACE 
+		SET
+			L_CONTENT = #{L_CONTENT},
+			L_ENABLE = #{L_ENABLE},
+			L_PAYMENT = #{L_PAYMENT},
+			L_SDATE = TO_DATE(#{L_SDATE},'YYYY-MM-DD'),
+			L_EDATE = TO_DATE(#{L_EDATE},'YYYY-MM-DD')
+		WHERE L_NO = #{L_NO}
+	]]>
+</update>
+
+
+
+<!-- 장소예약 신청 -->
+<insert id="insertPlacebook" parameterType="hashmap">
+	<![CDATA[
+		INSERT INTO PLACEBOOK (
+			PB_NO,
+			L_NO,
+			M_NO,
+			PB_DATE,
+			U_DATE )
+		VALUES (
+			PLACEBOOK_SEQ.NEXTVAL,
+			#{L_NO},
+			#{M_NO},
+			TO_DATE(sysdate,'YYYY-MM-DD'),
+			TO_DATE(#{U_DATE},'YYYY-MM-DD')
+			)
+	]]>
+</insert>
+
+<!-- 예약현황 증가 -->
+<update id="upCountUdate" parameterType="hashmap">
+ 	UPDATE 
+ 		LENDPLACE 
+ 	SET L_UDATE = L_UDATE + 1 
+ 	WHERE L_NO = #{L_NO}
+</update>
+
+<!-- 장소예약 신청 취소 -->
+<delete id="deletePlacebook" parameterType="hashmap">
+	<![CDATA[
+		DELETE
+		FROM PLACEBOOK
+		WHERE L_NO = #{L_NO}
+		AND U_DATE = TO_DATE(#{U_DATE},'YYYY-MM-DD') 
+		AND M_NO = #{M_NO}
+	]]>
+</delete>
+
+<!-- 예약현황 감소 -->
+<update id="dwCountUdate" parameterType="hashmap">
+ 	UPDATE 
+ 		LENDPLACE 
+ 	SET L_UDATE = L_UDATE - 1 
+ 	WHERE L_NO = #{L_NO} 
+</update>
+
+<!-- 장소 삭제 -->
+<delete id="deleteLendplace" parameterType="hashmap">
+	<![CDATA[
+		DELETE
+		FROM LENDPLACE
+		WHERE L_NO = #{L_NO}
+	]]>
+</delete>
+
+<insert id="insertReview" parameterType="hashmap" >
+    
+		INSERT INTO REVIEW (
+			L_NO,
+			R_NO,
+			M_NO,
+			L_RATE,
+			R_CONTENT,
+			R_DATE,
+			R_DELETEFLAG,
+            R_PARENT,
+            R_DEPTH,
+            R_ORDER,
+            R_GROUP
+            )
+		VALUES (
+			#{L_NO},
+			(SELECT NVL(MAX(R_NO),0)+1 from REVIEW),
+			#{M_NO},
+			#{rate},
+		<![CDATA[
+			#{R_CONTENT},
+		]]>
+			sysdate,
+			'N',
+			<choose>
+            	<when test="R_PARENT==null">
+            		0,
+            		0,
+            		(SELECT NVL(MAX(R_ORDER),0)+1 from REVIEW WHERE L_NO=#{L_NO}),
+            		(SELECT NVL(MAX(R_NO),0)+1 from REVIEW)
+            	</when>
+                <otherwise>
+                	#{R_PARENT},
+                	(SELECT R_DEPTH+1 R_DEPTH FROM REVIEW WHERE R_NO=#{R_PARENT}),
+                	(SELECT R_ORDER+1 R_ORDER FROM REVIEW WHERE R_NO=#{R_PARENT}),
+                	(SELECT R_GROUP FROM REVIEW WHERE R_NO=#{R_PARENT})
+                </otherwise>
+            </choose>
+            )
+</insert>
+
+<update id="RATE" parameterType="hashmap">
+	UPDATE LENDPLACE SET L_RATE =
+		( SELECT AVG(L_RATE) FROM REVIEW  WHERE L_RATE>=0 GROUP BY L_NO HAVING L_NO=#{L_NO})
+	 WHERE L_NO=#{L_NO}
+</update>
+
+<!-- 점수 주기 -->
+	<update id="plusGrade" parameterType="hashmap">
+		UPDATE MEMBERS SET M_GRADE=M_GRADE+1 WHERE M_NO=#{M_NO}
+	</update>
+	
+	<update id="minusGrade" parameterType="hashmap">
+		UPDATE MEMBERS SET M_GRADE=M_GRADE-1 WHERE M_NO=#{M_NO}
+	</update>
+
+<update id="updateReview" parameterType="hashmap">
+    <![CDATA[
+    	UPDATE REVIEW
+       		SET R_CONTENT=#{R_CONTENT} 
+     	WHERE R_NO=#{R_NO}
+    ]]>
+</update> 
+<select id="checkReview" resultType="hashmap" parameterType="hashmap">
+	SELECT * FROM REVIEW WHERE M_NO=#{M_NO} AND L_NO=#{L_NO}
+</select>
+<select id="selectReview" parameterType="hashmap" resultType="hashmap">
+	<![CDATA[
+    	SELECT 
+   			M.M_ID,
+    		R.L_NO,
+    		R.R_NO,
+    		R.M_NO,
+    		R.R_CONTENT,
+    		R.R_DATE,
+    		R.R_DELETEFLAG,
+    		R.R_PARENT,
+			R.R_DEPTH,
+			R.R_ORDER,
+			R.R_GROUP
+		FROM MEMBERS M, REVIEW R
+		WHERE M.M_NO=R.M_NO AND R.L_NO=#{L_NO}
+		ORDER BY R.R_ORDER ASC
+    ]]>
+</select>
+
+<delete id="deleteReview" parameterType="hashmap">
+	<![CDATA[
+		DELETE
+		FROM REVIEW
+		WHERE R_NO = #{R_NO} 
+	]]>
+</delete>
+
+<delete id="deleteGroupReview" parameterType="hashmap">
+	<![CDATA[
+		DELETE
+		FROM REVIEW
+		WHERE R_GROUP=#{R_GROUP}
+	]]>
+</delete>
+
+<update id="updateReviewOrder" parameterType="hashmap"> 
+        UPDATE REVIEW
+        SET R_ORDER = R_ORDER + 1 
+        WHERE L_NO=#{L_NO} AND R_ORDER > (SELECT R_ORDER FROM REVIEW WHERE R_NO = #{R_PARENT})  
+</update>
+
+<select id="selectReviewChild" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS CNT
+		FROM REVIEW
+		WHERE R_PARENT=#{R_NO} 
+</select>
+
+<select id="selectDeletedParent" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS DEL
+		FROM REVIEW
+		WHERE R_GROUP=#{R_GROUP} AND R_DELETEFLAG='Y'
+</select>
+
+<select id="selectParent" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS PAR
+		FROM REVIEW
+		WHERE R_GROUP=#{R_GROUP}
+</select>
+
+<update id="updateDeleteFlag" parameterType="hashmap">
+		UPDATE REVIEW
+		SET R_DELETEFLAG = 'Y'
+		WHERE R_NO=#{R_NO}
+</update>
+
+</mapper>
+

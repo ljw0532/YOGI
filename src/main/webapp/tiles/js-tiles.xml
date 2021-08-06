@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+<tiles-definitions>
+	<definition name="adminMemberList" template="/WEB-INF/views/admin/adminMemberList.jsp"/>
+	<definition name="adminGroupList" template="/WEB-INF/views/admin/adminGroupList.jsp"/>
+	<definition name="adminReportList" template="/WEB-INF/views/admin/adminReportList.jsp"/>
+	<definition name="adminLendplaceList" template="/WEB-INF/views/admin/adminLendplaceList.jsp"/>
+	<definition name="adminPlaceBookList" template="/WEB-INF/views/admin/adminPlaceBookList.jsp"/>
+	<definition name="groupForm" template="/WEB-INF/views/group/groupForm.jsp"/>
+	<definition name="groupModifyForm" template="/WEB-INF/views/group/groupModifyForm.jsp"/>
+	<definition name="adminpageView" template="/WEB-INF/views/admin/adminpageView.jsp"/>
+	<definition name="viewUserInfo" template="/WEB-INF/views/report/viewUserInfo.jsp"/>
+	<definition name="reportForm" template="/WEB-INF/views/report/reportForm.jsp"/>
+</tiles-definitions>

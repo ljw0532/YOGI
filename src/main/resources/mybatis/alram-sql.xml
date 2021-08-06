@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="alram">
+
+	<select id="alramCheck" parameterType="hashmap" resultType="hashmap">
+		select *
+		from alram
+		where alram_index_no = #{alram_index_no}
+		and alram_contnum = #{alram_contnum}
+		and alram_id = #{alram_id}
+		and readdate is null
+	</select> <!-- 알람 구분 번호, 알람 대상의 일련번호(_no), 알람대상 아이디 -->
+	
+	<select id="alramLoad" parameterType="java.lang.String" resultType="hashmap">
+		select *
+		from alram
+		where alram_id = #{m_no}
+		and readdate is null
+		order by regdate desc
+	</select>
+	
+	<select id="selectAlramOne" parameterType="hashmap" resultType="hashmap">
+		select *
+		from alram
+		where alram_seq = #{alram_seq}
+	</select>
+	
+	<insert id="regAlram" parameterType="hashmap">
+		INSERT INTO alram
+		(alram_seq, alram_index_no, alram_contnum, alram_id, reg_id, regdate)
+		VALUES
+		(alram_seq.nextval, #{alram_index_no}, #{alram_contnum}, #{alram_id}, #{reg_id}, sysdate)
+	</insert>
+	
+	<update id="updateRegIdAlram" parameterType="hashmap">
+        update
+        	alram
+        set
+            regdate = sysdate,
+            reg_id = #{REG_ID}
+        where
+            alram_seq = #{ALRAM_SEQ}
+	</update>
+	
+	<update id="readAlram" parameterType="hashmap">
+        update
+        	alram
+        set
+            readdate = sysdate
+        where
+            alram_seq = #{alram_seq}
+	</update>
+	
+</mapper>

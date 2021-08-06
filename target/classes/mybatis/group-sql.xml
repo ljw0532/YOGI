@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC " - //mybatis.org//DTD Config 3.0//EN" " http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+     
+<mapper namespace="group">
+	<!-- 모임리스트 & 검색 -->
+	<select id="group_select_all" resultType="hashmap" parameterType="hashmap">														  	
+		select * from group_gathering	
+		<where>		
+			gg_active=0
+			<if test="searchWord != null">
+				AND (gg_name like '%' || #{searchWord} || '%'  or gg_detail like '%' || #{searchWord} || '%')
+			</if>
+			<if test="searchCategory != null">
+				AND REGEXP_LIKE(gg_category,#{searchCategory})
+			</if>
+			<if test="searchAddr != null">
+				AND REGEXP_LIKE(gg_addr,#{searchAddr})
+			</if>
+			<if test="searchMStart != null">
+				AND REGEXP_LIKE(gg_date,#{searchMStart})
+			</if>
+			<if test="searchPay != null">
+				<if test='searchPay.equals("유료")'> 
+					<![CDATA[ AND gg_cost > 0  ]]>	
+				</if>
+				<if test='searchPay.equals("무료")'>
+					<![CDATA[ AND gg_cost <= 0 ]]>
+				</if>
+			</if>
+		</where>	
+		ORDER BY gg_no DESC																	
+	</select>
+
+
+	<select id="selectGroupDetail" parameterType="hashmap" resultType="hashmap">
+		SELECT 
+			gg_no,
+			gg_name,
+			m_no,
+			gg_category,
+			gg_addr,
+			gg_date,
+			gg_place,
+			gg_detail,
+			gg_cost,
+			gg_total,
+			gg_enable,
+			gg_ofn,
+			gg_rfn,
+			(gg_total - gg_enable) as gg_permit_pnum,
+			m_name as wt_name,
+			m_email as m_email
+		FROM
+			group_gathering natural join members
+		WHERE
+			gg_no=#{gg_no}
+	</select>
+	
+	<!-- 찜 리스트 -->
+	<select id="selectLikeitExist" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM Likeit
+		WHERE
+			gg_no=#{gg_no} and m_no=#{m_no}
+	</select>
+	
+	<!-- 찜하기 -->
+	<insert id="insertLikeit" parameterType="hashmap">
+		INSERT INTO likeit
+		(
+			li_no,
+			gg_no,
+			m_no
+		) 
+		VALUES
+		(
+			likeit_seq.nextval,
+			#{gg_no},
+			#{m_no}
+		)
+	</insert> 
+	 <!-- 찜삭제 --> 
+	<delete id="deleteLikeit" parameterType="hashmap">
+		DELETE FROM
+			likeit
+		WHERE
+			gg_no=#{gg_no} and m_no=#{m_no}
+	</delete>	
+	
+	<select id="selectGroupEnrollExist" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM group_enroll
+		WHERE
+			gg_no=#{gg_no} and m_no=#{m_no}
+	</select>
+	
+	
+	<!-- 모임 신청 -->
+	<insert id="insertGroupEnroll" parameterType="hashmap">
+		INSERT INTO group_enroll
+		VALUES
+		(
+			enroll_seq.nextval,
+			#{gg_no},
+			#{m_no}
+		)
+	</insert>
+	
+	<!-- 모임 취소 -->
+	<delete id="deleteGroupEnroll" parameterType="hashmap">
+		DELETE FROM
+			group_enroll
+		WHERE
+			gg_no=#{gg_no} and m_no=#{m_no}
+	</delete>
+	
+	<!-- 점수 주기 -->
+	<update id="plusGrade" parameterType="hashmap">
+		update members set m_grade=m_grade+10 where m_no=#{m_no}
+	</update>
+	
+	<update id="minusGrade" parameterType="hashmap">
+		update members set m_grade=m_grade-10 where m_no=#{m_no}
+	</update>
+	
+	<!-- 신청 인원 더하기 -->
+	<update id="plusCrp" parameterType="hashmap">
+		update group_gathering set gg_enable=gg_enable+1 where gg_no=#{gg_no}
+	</update>
+	
+	<update id="minusCrp" parameterType="hashmap">
+		update group_gathering set gg_enable=gg_enable-1 where gg_no=#{gg_no}
+	</update>
+	
+	<!-- 댓글 -->
+     <select id="selectCmtList" parameterType="hashmap" resultType="hashmap">
+      SELECT
+         c_no,
+         c_content,
+         c_date,
+         m_no,
+         c_parent,
+         c_depth,
+         c_order,
+         c_del,
+         c_group,
+         m_name as c_name
+      FROM
+         comments natural join members
+      WHERE
+         gg_no=#{gg_no}
+      ORDER BY
+      	 c_order ASC
+    </select>
+     <insert id="insertCmt" parameterType="hashmap" >
+		INSERT INTO COMMENTS (	
+		 C_NO,
+		 C_CONTENT,		 
+		 C_DATE,
+		 GG_NO,
+		 M_NO,
+		 C_PARENT,
+         C_DEPTH,
+         C_ORDER,
+         C_DEL,
+         C_GROUP
+       	)
+		VALUES (
+		comments_seq.nextval,
+		#{c_content},		
+		sysdate,
+		#{gg_no},
+		#{m_no},
+	<choose>
+            <when test="c_parent==null">
+            		0,
+            		0,
+            		(SELECT NVL(MAX(C_ORDER),0)+1 from COMMENTS WHERE gg_no=#{gg_no}),
+            		'N',
+            		(SELECT NVL(MAX(C_NO),0)+1 from COMMENTS)
+            	</when>
+                <otherwise>
+                	#{c_parent},
+                	(SELECT C_DEPTH+1 C_DEPTH FROM COMMENTS WHERE c_no=#{c_parent}),
+                	(SELECT C_ORDER+1 C_ORDER FROM COMMENTS WHERE c_no=#{c_parent}),
+                	'N',
+                	(SELECT C_GROUP FROM COMMENTS WHERE c_no=#{c_parent})
+                </otherwise>
+            </choose>
+            )
+</insert>
+
+	<update id="updateReplyStep" parameterType="hashmap">
+      UPDATE comments set c_order=c_order+1 where gg_no=#{gg_no} AND c_order > (SELECT c_order FROM COMMENTS WHERE c_no = #{c_parent})
+    </update>
+   
+    <delete parameterType="hashmap" id="cmtDelete">
+		delete from comments where c_no = #{c_no} 
+	</delete>
+	 
+	<delete id="cmtGroupDelete" parameterType="hashmap">
+	<![CDATA[
+		DELETE
+		FROM COMMENTS
+		WHERE c_group=#{c_group}
+	]]>
+	</delete>
+
+	<select id="selectCmtChild" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS CNT
+		FROM COMMENTS
+		WHERE c_parent=#{c_no} 
+	</select>
+	
+	<select id="selectDeletedParent" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS DEL
+		FROM COMMENTS
+		WHERE c_group=#{c_group} AND c_del='Y'
+	</select>
+	
+	<select id="selectParent" resultType="hashmap" parameterType="hashmap">
+        SELECT COUNT(*) AS PAR
+		FROM COMMENTS
+		WHERE c_group=#{c_group}
+	</select>
+
+	<update id="updateDeleteFlag" parameterType="hashmap">
+		UPDATE COMMENTS
+		SET C_DEL = 'Y'
+		WHERE c_no=#{c_no}
+	</update> 
+	<!-- 댓글 부분 끝 -->
+	
+    <select id="groupEnrollList" parameterType="hashmap" resultType="hashmap">
+      select ge_no,
+            gg_no,
+            m_no,
+            m_name as ge_name
+      from
+         group_enroll natural join members
+      where
+         gg_no = #{gg_no}
+    </select>
+	
+	
+	<insert parameterType="GroupModel" id="insertGroup"> 
+		INSERT INTO Group_Gathering ( 
+			gg_no, 
+			gg_name, 
+			m_no, 
+			gg_category, 
+			gg_addr, 
+			gg_date, 
+			gg_place, 
+			gg_detail, 
+			gg_cost, 
+			gg_total, 
+			gg_enable, 
+			gg_ofn, 
+			gg_penalty, 
+			gg_active, 
+			gg_rfn) 
+		VALUES ( 
+			groupgathering_seq.nextval, 
+			#{gg_name}, 
+			#{m_no}, 
+			#{gg_category}, 
+			#{gg_addr}, 
+			TO_DATE(#{gg_date},'YYYY-MM-DD HH24:mi'),
+			#{gg_place}, 
+			#{gg_detail}, 
+			#{gg_cost}, 
+			#{gg_total}, 
+			0, 
+			#{gg_ofn}, 
+			0, 
+			0, 
+			#{gg_rfn} 
+			) 
+	</insert>
+	
+	<update id="modifyGroup" parameterType="hashmap">
+		UPDATE 
+			group_gathering 
+		SET 
+			gg_addr=#{gg_addr},
+			gg_place=#{gg_place},
+			gg_detail=#{gg_detail},
+			gg_ofn=#{gg_ofn},
+			gg_rfn=#{gg_rfn}
+		WHERE 
+			gg_no=#{gg_no}
+	</update>
+	
+	<update id="modifyGroupExceptFile" parameterType="hashmap">
+		UPDATE 
+			group_gathering 
+		SET 
+			gg_addr=#{gg_addr},
+			gg_place=#{gg_place},
+			gg_detail=#{gg_detail}
+		WHERE 
+			gg_no=#{gg_no}
+	</update>
+	
+	<select id="selectFileName" resultType="String">
+		SELECT
+			gg_rfn
+		FROM
+			group_gathering
+		WHERE
+			gg_no=#{gg_no}
+		
+	</select>
+	
+	<update id="inactivateGroup" parameterType="hashmap">
+		UPDATE 
+			Group_Gathering
+		SET
+			gg_active=1
+		WHERE
+			gg_no=#{gg_no}
+	</update>
+	
+	<insert parameterType="GroupModel" id="insertGroupExceptFile"> 
+		INSERT INTO Group_Gathering ( 
+			gg_no, 
+			gg_name, 
+			m_no, 
+			gg_category, 
+			gg_addr, 
+			gg_date, 
+			gg_place, 
+			gg_detail, 
+			gg_cost, 
+			gg_total, 
+			gg_enable, 
+			gg_penalty, 
+			gg_active
+			) 
+		VALUES ( 
+			groupgathering_seq.nextval, 
+			#{gg_name}, 
+			#{m_no}, 
+			#{gg_category}, 
+			#{gg_addr}, 
+			TO_DATE(#{gg_date},'YYYY-MM-DD HH24:mi'), 
+			#{gg_place}, 
+			#{gg_detail}, 
+			#{gg_cost}, 
+			#{gg_total}, 
+			0, 
+			0, 
+			0
+			) 
+	</insert>
+	
+	<select id="selectGroupAddr" resultType="String">
+		SELECT
+			gg_addr
+		FROM
+			group_gathering
+		WHERE
+			gg_no=#{gg_no}
+		
+	</select>
+	
+	<select id="selectGroupPlace" resultType="String">
+		SELECT
+			gg_place
+		FROM
+			group_gathering
+		WHERE
+			gg_no=#{gg_no}
+		
+	</select>	
+	
+	<select id="sessionWriter" parameterType="hashmap" resultType="hashmap">
+		select m_name from members where m_no = #{m_no}
+	</select>
+	
+	<select id="enrollMno" parameterType="hashmap" resultType="hashmap">
+		select m_no from group_enroll where gg_no = #{gg_no} and m_no = #{m_no}
+	</select>
+	
+	<!-- 모임 개설 점수 주기 -->
+	<update id="plusGradeByGroupInsert" parameterType="hashmap">
+		update members set m_grade=m_grade+30 where m_no=#{m_no}
+	</update>
+</mapper>
